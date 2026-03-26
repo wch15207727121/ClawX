@@ -1,0 +1,41 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]  # 推送到 main 时自动打包
+  workflow_dispatch:    # 也可以手动点一下打包
+
+jobs:
+  build-windows:
+    runs-on: windows-latest  # 用 Windows 云端服务器打包
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows EXE
+        run: pnpm run build:win
+        env:
+          # 加速下载
+          ELECTRON_MIRROR: "https://npmmirror.com/mirrors/electron/"
+          ELECTRON_BUILDER_BINARIES_MIRROR: "https://npmmirror.com/mirrors/electron-builder-binaries/"
+
+      - name: Upload EXE
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-exe
+          path: release/*.exe
